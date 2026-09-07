@@ -8,7 +8,7 @@ Vercel にデプロイして、PC・スマホのブラウザから同じデー�
 | ディレクトリ | 役割 |
 |---|---|
 | `api/` | Vercel Functions。`api/*.ts` が各エンドポイント、`api/_lib/` が共通ロジック(Yahoo取得・計算・KV・認証) |
-| `client/` | React (Vite) の SPA。ビルド結果 `client/dist/` を Vercel が静的配信 |
+| `client/` | React (Vite) の SPA。ビルド結果はリポジトリ直下の `dist/` に出力され、Vercel が静的配信 |
 | `dev-server.ts` | ローカル開発用。`api/` のハンドラを Express に載せて `vercel dev` なしで動かす |
 
 ### データの流れ
@@ -67,10 +67,10 @@ gh repo create stock-portfolio --private --source=. --push
 ### 2. Vercel プロジェクトを作成
 
 - [vercel.com/new](https://vercel.com/new) で上記リポジトリを import
-- Framework Preset: **Other**(`vercel.json` で build/output を指定済み)
-- 設定はそのまま(`vercel.json` が反映される):
-  - Build Command: `npm run build`
-  - Output Directory: `client/dist`
+- Framework Preset: **Other**、Root Directory: リポジトリ直下(`.`)のまま
+- ビルド設定は `vercel.json` が指定するので触らない:
+  - Build Command: `npm run build`(client をビルドして `dist/` に出力)
+  - Output Directory: `dist`
 
 ### 3. KV(Upstash Redis)を接続
 

@@ -3,6 +3,9 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  // Emit to the repo root so Vercel's default output detection finds it
+  // regardless of framework auto-detection.
+  build: { outDir: "../dist", emptyOutDir: true },
   plugins: [
     react(),
     VitePWA({
