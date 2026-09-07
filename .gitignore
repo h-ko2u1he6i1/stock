@@ -1,0 +1,11 @@
+node_modules/
+dist/
+client/dev-dist/
+.DS_Store
+*.log
+
+# local secrets / state
+.env
+.env*.local
+.vercel
+api/_lib/data/.local-store.json

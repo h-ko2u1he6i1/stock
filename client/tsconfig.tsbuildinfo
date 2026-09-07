@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/format.ts","./src/hooks.ts","./src/main.tsx","./src/types.ts","./src/components/addstockform.tsx","./src/components/loginscreen.tsx","./src/components/portfoliotable.tsx","./src/components/stockchart.tsx","./src/components/summarybar.tsx","./src/components/icons.tsx"],"version":"5.9.3"}
