@@ -17,7 +17,8 @@ Vercel にデプロイして、PC・スマホのブラウザから同じデー�
 ブラウザ ──/api/portfolio──▶ KV のスナップショットを返すだけ(高速)
                               ▲
         /api/refresh ─────────┘  Yahoo から全銘柄を取得して KV に保存
-        (Vercel Cron 15分ごと / 古ければリクエスト時にバックグラウンド更新)
+        (Vercel Cron 1日1回 + アプリを開いた時にスナップショットが15分以上古ければ
+         バックグラウンドで更新)
 ```
 
 - 保有銘柄(`stock:positions`)と価格スナップショット(`stock:snapshot`)を KV に保存
@@ -89,10 +90,11 @@ Vercel → Settings → Environment Variables(`.env.example` 参照):
 
 ### 5. デプロイ
 
-`git push` で自動デプロイ。初回アクセス時にスナップショットが空なので、その場で Yahoo 取得が走る(数十秒)。以降は `vercel.json` の Cron(`*/15 * * * *`)が更新し続ける。
+`git push` で自動デプロイ。初回アクセス時にスナップショットが空なので、その場で Yahoo 取得が走る(数十秒)。
 
-> Hobby プランは Cron の実行間隔・精度に制限がある。正確な間隔が要るなら外部 cron(cron-job.org 等)から
-> `https://<your-app>/api/refresh?key=<REFRESH_KEY>` を叩く。リクエスト時のバックグラウンド更新もあるので必須ではない。
+**Cron について**: Hobby プランは **1日1回まで**なので `vercel.json` は `0 7 * * *`(UTC、= JST 16:00 / 東証引け後)に設定。日中の値動きは「アプリを開いた時にスナップショットが15分以上古ければバックグラウンド更新」で追従する。
+もっと頻繁に自動更新したい場合は、外部 cron(cron-job.org 等)から数分間隔で
+`https://<your-app>/api/refresh?key=<REFRESH_KEY>` を叩く(`REFRESH_KEY` を環境変数に設定)。
 
 ### 6. スマホにインストール
 
