@@ -1113,18 +1113,13 @@ tr.main-row.row-error td {
   border-color: var(--border-strong);
 }
 
-.holding-ro {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 11px;
+.demo-note {
+  margin: -8px 0 18px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
   color: var(--text-muted);
-}
-
-.holding-ro .num {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
+  font-size: 12.5px;
 }
 
 .holding-actions {

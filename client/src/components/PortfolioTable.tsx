@@ -18,10 +18,9 @@ interface Props {
   stocks: EnrichedStock[];
   onUpdate: (code: string, quantity: number, avgCost: number | null, acquiredDate: string | null) => Promise<void>;
   onDelete: (code: string) => Promise<void>;
-  readOnly?: boolean;
 }
 
-export function PortfolioTable({ stocks, onUpdate, onDelete, readOnly = false }: Props) {
+export function PortfolioTable({ stocks, onUpdate, onDelete }: Props) {
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
   const isMobile = useMediaQuery("(max-width: 720px)");
 
@@ -29,9 +28,7 @@ export function PortfolioTable({ stocks, onUpdate, onDelete, readOnly = false }:
     return (
       <div className="card empty-state">
         <EmptyIcon />
-        {readOnly
-          ? "銘柄が登録されていません。"
-          : "銘柄がまだ登録されていません。上のフォームから追加してください。"}
+        銘柄がまだ登録されていません。上のフォームから追加してください。
       </div>
     );
   }
@@ -49,7 +46,6 @@ export function PortfolioTable({ stocks, onUpdate, onDelete, readOnly = false }:
             onToggle={() => toggle(s.code)}
             onUpdate={onUpdate}
             onDelete={onDelete}
-            readOnly={readOnly}
           />
         ))}
       </div>
@@ -84,7 +80,6 @@ export function PortfolioTable({ stocks, onUpdate, onDelete, readOnly = false }:
               onToggle={() => toggle(s.code)}
               onUpdate={onUpdate}
               onDelete={onDelete}
-              readOnly={readOnly}
             />
           ))}
         </tbody>
@@ -99,7 +94,6 @@ interface EditableProps {
   onToggle: () => void;
   onUpdate: Props["onUpdate"];
   onDelete: Props["onDelete"];
-  readOnly: boolean;
 }
 
 /** Shared inline-edit state for a single holding (used by both table row and card). */
@@ -129,7 +123,7 @@ function usePositionEditor(stock: EnrichedStock, onUpdate: Props["onUpdate"], on
   return { quantity, setQuantity, avgCost, setAvgCost, saving, commitChanges, handleDelete };
 }
 
-function StockRow({ stock, expanded, onToggle, onUpdate, onDelete, readOnly }: EditableProps) {
+function StockRow({ stock, expanded, onToggle, onUpdate, onDelete }: EditableProps) {
   const ed = usePositionEditor(stock, onUpdate, onDelete);
   const changeDir = directionClass(stock.changeAmount);
   const pnlDir = directionClass(stock.pnl);
@@ -151,40 +145,32 @@ function StockRow({ stock, expanded, onToggle, onUpdate, onDelete, readOnly }: E
             {!stock.market && !stock.currency && "—"}
           </div>
         </td>
-        <td className="num">
-          {readOnly ? (
-            formatNumber(stock.quantity)
-          ) : (
-            <input
-              className="cell-input num"
-              type="number"
-              min="0"
-              step="1"
-              aria-label="保有数"
-              value={ed.quantity}
-              disabled={ed.saving}
-              onChange={(e) => ed.setQuantity(e.target.value)}
-              onBlur={ed.commitChanges}
-            />
-          )}
+        <td>
+          <input
+            className="cell-input num"
+            type="number"
+            min="0"
+            step="1"
+            aria-label="保有数"
+            value={ed.quantity}
+            disabled={ed.saving}
+            onChange={(e) => ed.setQuantity(e.target.value)}
+            onBlur={ed.commitChanges}
+          />
         </td>
-        <td className="num">
-          {readOnly ? (
-            stock.avgCost != null ? formatMoney(stock.avgCost, stock.currency) : "—"
-          ) : (
-            <input
-              className="cell-input num"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="—"
-              aria-label="取得単価"
-              value={ed.avgCost}
-              disabled={ed.saving}
-              onChange={(e) => ed.setAvgCost(e.target.value)}
-              onBlur={ed.commitChanges}
-            />
-          )}
+        <td>
+          <input
+            className="cell-input num"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="—"
+            aria-label="取得単価"
+            value={ed.avgCost}
+            disabled={ed.saving}
+            onChange={(e) => ed.setAvgCost(e.target.value)}
+            onBlur={ed.commitChanges}
+          />
         </td>
         <td className="num">{formatMoney(stock.currentPrice, stock.currency)}</td>
         <td className={`num ${changeDir}`}>
@@ -236,17 +222,15 @@ function StockRow({ stock, expanded, onToggle, onUpdate, onDelete, readOnly }: E
             >
               <ChevronIcon className={`chev${expanded ? " open" : ""}`} />
             </button>
-            {!readOnly && (
-              <button
-                type="button"
-                className="icon-btn danger"
-                onClick={ed.handleDelete}
-                aria-label="削除"
-                title="削除"
-              >
-                <TrashIcon />
-              </button>
-            )}
+            <button
+              type="button"
+              className="icon-btn danger"
+              onClick={ed.handleDelete}
+              aria-label="削除"
+              title="削除"
+            >
+              <TrashIcon />
+            </button>
           </div>
         </td>
       </tr>
@@ -261,7 +245,7 @@ function StockRow({ stock, expanded, onToggle, onUpdate, onDelete, readOnly }: E
   );
 }
 
-function StockCard({ stock, expanded, onToggle, onUpdate, onDelete, readOnly }: EditableProps) {
+function StockCard({ stock, expanded, onToggle, onUpdate, onDelete }: EditableProps) {
   const ed = usePositionEditor(stock, onUpdate, onDelete);
   const changeDir = directionClass(stock.changeAmount);
   const pnlDir = directionClass(stock.pnl);
@@ -316,50 +300,33 @@ function StockCard({ stock, expanded, onToggle, onUpdate, onDelete, readOnly }: 
       </div>
 
       <div className="holding-edit">
-        {readOnly ? (
-          <>
-            <div className="holding-ro">
-              <span className="k">保有数</span>
-              <span className="num">{formatNumber(stock.quantity)}</span>
-            </div>
-            <div className="holding-ro">
-              <span className="k">取得単価</span>
-              <span className="num">
-                {stock.avgCost != null ? formatMoney(stock.avgCost, stock.currency) : "—"}
-              </span>
-            </div>
-          </>
-        ) : (
-          <>
-            <label>
-              保有数
-              <input
-                className="cell-input num"
-                type="number"
-                min="0"
-                step="1"
-                value={ed.quantity}
-                disabled={ed.saving}
-                onChange={(e) => ed.setQuantity(e.target.value)}
-                onBlur={ed.commitChanges}
-              />
-            </label>
-            <label>
-              取得単価
-              <input
-                className="cell-input num"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="—"
-                value={ed.avgCost}
-                disabled={ed.saving}
-                onChange={(e) => ed.setAvgCost(e.target.value)}
-                onBlur={ed.commitChanges}
-              />
-            </label>
-          </>
-        )}
+        <label>
+          保有数
+          <input
+            className="cell-input num"
+            type="number"
+            min="0"
+            step="1"
+            value={ed.quantity}
+            disabled={ed.saving}
+            onChange={(e) => ed.setQuantity(e.target.value)}
+            onBlur={ed.commitChanges}
+          />
+        </label>
+        <label>
+          取得単価
+          <input
+            className="cell-input num"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="—"
+            value={ed.avgCost}
+            disabled={ed.saving}
+            onChange={(e) => ed.setAvgCost(e.target.value)}
+            onBlur={ed.commitChanges}
+          />
+        </label>
         {stock.dividendMonths.length > 0 && (
           <div className="chip-row">
             {stock.dividendMonths.map((m) => (
@@ -375,11 +342,9 @@ function StockCard({ stock, expanded, onToggle, onUpdate, onDelete, readOnly }: 
         <button type="button" className="link-button" onClick={onToggle} aria-expanded={expanded}>
           {expanded ? "詳細を閉じる" : "詳細・チャート"}
         </button>
-        {!readOnly && (
-          <button type="button" className="link-button danger" onClick={ed.handleDelete}>
-            削除
-          </button>
-        )}
+        <button type="button" className="link-button danger" onClick={ed.handleDelete}>
+          削除
+        </button>
       </div>
 
       {expanded && <StockDetail stock={stock} />}

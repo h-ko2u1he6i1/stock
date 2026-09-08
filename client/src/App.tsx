@@ -110,7 +110,7 @@ export default function App() {
     );
   }
 
-  const readOnly = role === "viewer";
+  const isDemo = role === "viewer";
 
   const updatedLabel = portfolio
     ? new Date(portfolio.updatedAt).toLocaleString("ja-JP", {
@@ -129,7 +129,7 @@ export default function App() {
             <LogoIcon />
           </span>
           <h1>株式ポートフォリオ管理</h1>
-          {readOnly && <span className="role-pill">閲覧モード</span>}
+          {isDemo && <span className="role-pill">デモ</span>}
         </div>
         <div className="header-right">
           {updatedLabel && (
@@ -155,7 +155,13 @@ export default function App() {
         </div>
       </header>
 
-      {!readOnly && <AddStockForm onAdd={handleAdd} />}
+      <AddStockForm onAdd={handleAdd} />
+
+      {isDemo && (
+        <p className="demo-note">
+          これは共有のデモ用ポートフォリオです。自由に追加・編集できます（他の閲覧者にも反映されます）。
+        </p>
+      )}
 
       {error && (
         <div className="banner-error" role="alert">
@@ -184,7 +190,6 @@ export default function App() {
             stocks={portfolio.positions}
             onUpdate={handleUpdate}
             onDelete={handleDelete}
-            readOnly={readOnly}
           />
         </>
       ) : null}
