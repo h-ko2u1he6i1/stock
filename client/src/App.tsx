@@ -13,13 +13,14 @@ import { PortfolioTable } from "./components/PortfolioTable";
 import { SummaryBar } from "./components/SummaryBar";
 import { LoginScreen } from "./components/LoginScreen";
 import { AlertIcon, LogoIcon, RefreshIcon } from "./components/icons";
-import type { NewPositionInput, PortfolioResponse } from "./types";
+import type { NewPositionInput, PortfolioResponse, Role } from "./types";
 
 type Gate = "checking" | "login" | "open";
 
 export default function App() {
   const [gate, setGate] = useState<Gate>("checking");
   const [showLogout, setShowLogout] = useState(false);
+  const [role, setRole] = useState<Role>("owner");
   const [portfolio, setPortfolio] = useState<PortfolioResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,6 +47,7 @@ export default function App() {
     (async () => {
       const session = await getSession();
       setShowLogout(session.authRequired);
+      if (session.role) setRole(session.role);
       if (session.authRequired && !session.authenticated) {
         setGate("login");
         setLoading(false);
@@ -98,7 +100,8 @@ export default function App() {
   if (gate === "login") {
     return (
       <LoginScreen
-        onSuccess={() => {
+        onSuccess={(r) => {
+          setRole(r);
           setGate("open");
           setLoading(true);
           load();
@@ -106,6 +109,8 @@ export default function App() {
       />
     );
   }
+
+  const readOnly = role === "viewer";
 
   const updatedLabel = portfolio
     ? new Date(portfolio.updatedAt).toLocaleString("ja-JP", {
@@ -124,6 +129,7 @@ export default function App() {
             <LogoIcon />
           </span>
           <h1>株式ポートフォリオ管理</h1>
+          {readOnly && <span className="role-pill">閲覧モード</span>}
         </div>
         <div className="header-right">
           {updatedLabel && (
@@ -149,7 +155,7 @@ export default function App() {
         </div>
       </header>
 
-      <AddStockForm onAdd={handleAdd} />
+      {!readOnly && <AddStockForm onAdd={handleAdd} />}
 
       {error && (
         <div className="banner-error" role="alert">
@@ -178,6 +184,7 @@ export default function App() {
             stocks={portfolio.positions}
             onUpdate={handleUpdate}
             onDelete={handleDelete}
+            readOnly={readOnly}
           />
         </>
       ) : null}

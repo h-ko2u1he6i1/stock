@@ -83,10 +83,15 @@ Vercel → Settings → Environment Variables(`.env.example` 参照):
 
 | 変数 | 値 | 用途 |
 |---|---|---|
-| `APP_PASSWORD` | 好きなパスワード | ログイン。未設定だと誰でもアクセス可 |
+| `APP_PASSWORD` | 好きなパスワード | オーナー用ログイン。実データにフルアクセス。未設定だと誰でもアクセス可 |
+| `VIEWER_PASSWORD` | 別のパスワード（任意） | 閲覧用ログイン。サンプル銘柄の**別ポートフォリオ**を読み取り専用で表示。レビュアーに配る。実データは見えない・触れない |
 | `AUTH_SECRET` | 長いランダム文字列 | セッション Cookie の署名。`openssl rand -base64 32` |
 | `CRON_SECRET` | 長いランダム文字列 | Vercel Cron が `/api/refresh` を呼ぶときの認証 |
 | `REFRESH_KEY` | (任意)ランダム文字列 | `/api/refresh?key=...` で手動更新したいとき |
+
+**レビュアーに見せる場合**: `VIEWER_PASSWORD` を設定し、その値をレビュアーに渡す。閲覧用アカウントは
+`api/_lib/data/positions.viewer-seed.json` のサンプル銘柄を見る（編集・削除・追加は不可、チャートは閲覧可）。
+あなたの実データ（`APP_PASSWORD` でログイン）とは KV 上で完全に分離（`stock:*` と `stock:viewer:*`）。
 
 ### 5. デプロイ
 

@@ -1,0 +1,8 @@
+[
+  { "code": "7203.T", "quantity": 100, "avgCost": 2800, "acquiredDate": null, "assetType": "stock" },
+  { "code": "9432.T", "quantity": 300, "avgCost": 155, "acquiredDate": null, "assetType": "stock" },
+  { "code": "8306.T", "quantity": 200, "avgCost": 1400, "acquiredDate": null, "assetType": "stock" },
+  { "code": "9433.T", "quantity": 50, "avgCost": 4300, "acquiredDate": null, "assetType": "stock" },
+  { "code": "2914.T", "quantity": 100, "avgCost": 3600, "acquiredDate": null, "assetType": "stock" },
+  { "code": "6758.T", "quantity": 30, "avgCost": 12000, "acquiredDate": null, "assetType": "stock" }
+]

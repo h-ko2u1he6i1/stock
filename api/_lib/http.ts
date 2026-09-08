@@ -4,6 +4,9 @@ import { waitUntil } from "@vercel/functions";
 
 export type Handler = (req: VercelRequest, res: VercelResponse) => unknown | Promise<unknown>;
 
+/** "owner" sees the real portfolio; "viewer" sees an isolated demo portfolio. */
+export type Role = "owner" | "viewer";
+
 /** Run a promise after the response without blocking it (no-op-safe off Vercel). */
 export function background(p: Promise<unknown>): void {
   const settled = p.catch(() => undefined);
@@ -19,16 +22,25 @@ const MAX_AGE_SEC = 60 * 60 * 24 * 30; // 30 days
 const secretKey = () =>
   new TextEncoder().encode(process.env.AUTH_SECRET ?? "dev-insecure-secret-change-me");
 
-const password = () => process.env.APP_PASSWORD ?? "";
+const ownerPassword = () => process.env.APP_PASSWORD ?? "";
+const viewerPassword = () => process.env.VIEWER_PASSWORD ?? "";
 const isProd = () => Boolean(process.env.VERCEL) || process.env.NODE_ENV === "production";
 
-/** When no APP_PASSWORD is configured the app is open (useful for local dev). */
+/** When no APP_PASSWORD is configured the app is open as owner (useful for local dev). */
 export function authRequired(): boolean {
-  return password().length > 0;
+  return ownerPassword().length > 0;
 }
 
-export function checkPassword(input: unknown): boolean {
-  return typeof input === "string" && input.length > 0 && input === password();
+export function viewerEnabled(): boolean {
+  return viewerPassword().length > 0;
+}
+
+/** Returns the role the password grants, or null if it matches nothing. */
+export function authenticate(input: unknown): Role | null {
+  if (typeof input !== "string" || input.length === 0) return null;
+  if (input === ownerPassword()) return "owner";
+  if (viewerPassword() && input === viewerPassword()) return "viewer";
+  return null;
 }
 
 function readCookie(req: VercelRequest, name: string): string | undefined {
@@ -43,8 +55,8 @@ function readCookie(req: VercelRequest, name: string): string | undefined {
   return undefined;
 }
 
-export async function sessionCookie(): Promise<string> {
-  const token = await new SignJWT({ ok: true })
+export async function sessionCookie(role: Role): Promise<string> {
+  const token = await new SignJWT({ role })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${MAX_AGE_SEC}s`)
@@ -64,23 +76,31 @@ export function clearCookie(): string {
   return `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
 }
 
-export async function isAuthed(req: VercelRequest): Promise<boolean> {
-  if (!authRequired()) return true;
+/** The caller's role: "owner" when auth is disabled, else decoded from the cookie. */
+export async function getRole(req: VercelRequest): Promise<Role | null> {
+  if (!authRequired()) return "owner";
   const token = readCookie(req, COOKIE_NAME);
-  if (!token) return false;
+  if (!token) return null;
   try {
-    await jwtVerify(token, secretKey());
-    return true;
+    const { payload } = await jwtVerify(token, secretKey());
+    return payload.role === "viewer" ? "viewer" : "owner";
   } catch {
-    return false;
+    return null;
   }
 }
 
-/** Wraps a handler: enforces method(s), auth, and turns thrown errors into JSON. */
+export async function isAuthed(req: VercelRequest): Promise<boolean> {
+  return (await getRole(req)) != null;
+}
+
+/**
+ * Wraps a handler: enforces method(s), auth, optional owner-only access, and
+ * turns thrown errors into JSON.
+ */
 export function route(
   methods: string[],
   handler: Handler,
-  opts: { auth?: boolean } = { auth: true }
+  opts: { auth?: boolean; owner?: boolean } = {}
 ): Handler {
   return async (req, res) => {
     if (!methods.includes(req.method ?? "GET")) {
@@ -88,9 +108,16 @@ export function route(
       res.status(405).json({ error: "Method Not Allowed" });
       return;
     }
-    if (opts.auth !== false && !(await isAuthed(req))) {
-      res.status(401).json({ error: "認証が必要です" });
-      return;
+    if (opts.auth !== false) {
+      const role = await getRole(req);
+      if (role == null) {
+        res.status(401).json({ error: "認証が必要です" });
+        return;
+      }
+      if (opts.owner && role !== "owner") {
+        res.status(403).json({ error: "閲覧用アカウントでは変更できません" });
+        return;
+      }
     }
     try {
       await handler(req, res);

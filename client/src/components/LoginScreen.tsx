@@ -1,10 +1,11 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { login } from "../api";
+import type { Role } from "../types";
 import { LogoIcon } from "./icons";
 
 interface Props {
-  onSuccess: () => void;
+  onSuccess: (role: Role) => void;
 }
 
 export function LoginScreen({ onSuccess }: Props) {
@@ -17,8 +18,8 @@ export function LoginScreen({ onSuccess }: Props) {
     setError(null);
     setBusy(true);
     try {
-      await login(password);
-      onSuccess();
+      const role = await login(password);
+      onSuccess(role);
     } catch (err) {
       setError(err instanceof Error ? err.message : "ログインに失敗しました");
     } finally {

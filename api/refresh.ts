@@ -1,8 +1,8 @@
-import { route, isRefreshAuthorized } from "./_lib/http.js";
+import { route, isRefreshAuthorized, viewerEnabled } from "./_lib/http.js";
 import { refreshSnapshot } from "./_lib/snapshot.js";
 
 /**
- * Rebuilds the portfolio snapshot from Yahoo. Invoked by Vercel Cron
+ * Rebuilds the portfolio snapshot(s) from Yahoo. Invoked by Vercel Cron
  * (Authorization: Bearer $CRON_SECRET) or manually with ?key=$REFRESH_KEY.
  */
 export default route(
@@ -12,8 +12,17 @@ export default route(
       res.status(401).json({ error: "unauthorized" });
       return;
     }
-    const snapshot = await refreshSnapshot();
-    res.json({ ok: true, fetchedAt: snapshot.fetchedAt, positions: snapshot.data.positions.length });
+    const owner = await refreshSnapshot("owner");
+    let viewer: { fetchedAt: string; positions: number } | null = null;
+    if (viewerEnabled()) {
+      const s = await refreshSnapshot("viewer");
+      viewer = { fetchedAt: s.fetchedAt, positions: s.data.positions.length };
+    }
+    res.json({
+      ok: true,
+      owner: { fetchedAt: owner.fetchedAt, positions: owner.data.positions.length },
+      viewer,
+    });
   },
   { auth: false }
 );

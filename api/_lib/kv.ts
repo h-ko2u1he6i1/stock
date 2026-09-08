@@ -79,7 +79,13 @@ export async function kvSet<T>(key: string, value: T): Promise<void> {
   await writeLocal(store);
 }
 
-export const KEYS = {
-  positions: "stock:positions",
-  snapshot: "stock:snapshot",
-} as const;
+/**
+ * Per-role key namespaces. "owner" keeps the original unprefixed keys so
+ * existing data needs no migration; "viewer" is a fully isolated demo dataset.
+ */
+export type Scope = "owner" | "viewer";
+
+export const keyFor = {
+  positions: (scope: Scope) => (scope === "owner" ? "stock:positions" : `stock:${scope}:positions`),
+  snapshot: (scope: Scope) => (scope === "owner" ? "stock:snapshot" : `stock:${scope}:snapshot`),
+};

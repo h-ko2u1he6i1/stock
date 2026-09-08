@@ -50,9 +50,12 @@ export interface PortfolioResponse {
   stale?: boolean;
 }
 
+export type Role = "owner" | "viewer";
+
 export interface SessionInfo {
   authRequired: boolean;
   authenticated: boolean;
+  role: Role | null;
 }
 
 export const CHART_RANGES = ["1M", "3M", "6M", "1Y", "5Y"] as const;

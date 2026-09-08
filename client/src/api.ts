@@ -3,6 +3,7 @@ import type {
   ChartRange,
   NewPositionInput,
   PortfolioResponse,
+  Role,
   SearchCandidate,
   SessionInfo,
 } from "./types";
@@ -25,20 +26,21 @@ async function handleResponse(res: Response): Promise<PortfolioResponse> {
 
 export async function getSession(): Promise<SessionInfo> {
   const res = await fetch("/api/session");
-  if (!res.ok) return { authRequired: true, authenticated: false };
+  if (!res.ok) return { authRequired: true, authenticated: false, role: null };
   return (await res.json()) as SessionInfo;
 }
 
-export async function login(password: string): Promise<void> {
+export async function login(password: string): Promise<Role> {
   const res = await fetch("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password }),
   });
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
     throw new Error(data.error ?? "ログインに失敗しました");
   }
+  return (data.role ?? "owner") as Role;
 }
 
 export async function logout(): Promise<void> {

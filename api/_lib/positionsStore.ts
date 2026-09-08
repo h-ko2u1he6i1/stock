@@ -1,48 +1,52 @@
 import { createRequire } from "node:module";
 import type { Position } from "./types.js";
-import { KEYS, kvGet, kvSet } from "./kv.js";
+import { keyFor, kvGet, kvSet, type Scope } from "./kv.js";
 
 const require = createRequire(import.meta.url);
 
-function loadSeed(): Position[] {
+function normalize(raw: Position[]): Position[] {
+  return raw.map((p) => ({ ...p, assetType: p.assetType ?? "stock" }));
+}
+
+function loadSeed(scope: Scope): Position[] {
+  const file = scope === "viewer" ? "./data/positions.viewer-seed.json" : "./data/positions.seed.json";
   try {
-    const raw = require("./data/positions.seed.json") as Position[];
-    return raw.map((p) => ({ ...p, assetType: p.assetType ?? "stock" }));
+    return normalize(require(file) as Position[]);
   } catch {
     return [];
   }
 }
 
-export async function loadPositions(): Promise<Position[]> {
-  const stored = await kvGet<Position[]>(KEYS.positions);
+export async function loadPositions(scope: Scope): Promise<Position[]> {
+  const stored = await kvGet<Position[]>(keyFor.positions(scope));
   if (stored != null) {
-    return stored.map((p) => ({ ...p, assetType: p.assetType ?? "stock" }));
+    return normalize(stored);
   }
-  // First run: seed the store from the bundled snapshot so nothing is lost.
-  const seed = loadSeed();
-  await kvSet(KEYS.positions, seed);
+  // First run for this scope: seed it.
+  const seed = loadSeed(scope);
+  await kvSet(keyFor.positions(scope), seed);
   return seed;
 }
 
-export async function savePositions(positions: Position[]): Promise<void> {
-  await kvSet(KEYS.positions, positions);
+export async function savePositions(scope: Scope, positions: Position[]): Promise<void> {
+  await kvSet(keyFor.positions(scope), positions);
 }
 
-export async function upsertPosition(position: Position): Promise<Position[]> {
-  const positions = await loadPositions();
+export async function upsertPosition(scope: Scope, position: Position): Promise<Position[]> {
+  const positions = await loadPositions(scope);
   const idx = positions.findIndex((p) => p.code === position.code);
   if (idx >= 0) {
     positions[idx] = position;
   } else {
     positions.push(position);
   }
-  await savePositions(positions);
+  await savePositions(scope, positions);
   return positions;
 }
 
-export async function removePosition(code: string): Promise<Position[]> {
-  const positions = await loadPositions();
+export async function removePosition(scope: Scope, code: string): Promise<Position[]> {
+  const positions = await loadPositions(scope);
   const filtered = positions.filter((p) => p.code !== code);
-  await savePositions(filtered);
+  await savePositions(scope, filtered);
   return filtered;
 }
