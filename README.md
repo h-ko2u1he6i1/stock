@@ -50,6 +50,18 @@ PWA アイコンを作り直す(`client/scripts/icon.svg` を編集したとき)
 npm run icons -w client
 ```
 
+保有銘柄を JSON から一括インポート(KV へ直接書き込み。バックアップからの復元や初期投入に):
+
+```bash
+KV_REST_API_URL='https://...' KV_REST_API_TOKEN='...' \
+  node scripts/import-positions.mjs my-positions.json            # オーナー
+KV_REST_API_URL='...' KV_REST_API_TOKEN='...' \
+  node scripts/import-positions.mjs demo.json stock:viewer:positions  # デモ用
+```
+
+`my-positions.json` は `{ code, quantity, avgCost?, acquiredDate?, assetType? }` の配列。
+認証情報は Vercel の Settings → Environment Variables(Upstash 連携で追加されたもの)からコピー。
+
 ## Vercel へのデプロイ
 
 ### 1. リポジトリを用意

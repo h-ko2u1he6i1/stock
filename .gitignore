@@ -9,3 +9,4 @@ client/dev-dist/
 .env*.local
 .vercel
 api/_lib/data/.local-store.json
+my-positions.json

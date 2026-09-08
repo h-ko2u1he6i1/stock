@@ -10,7 +10,8 @@
     "dev": "concurrently -n api,web -c blue,green \"tsx watch dev-server.ts\" \"npm run dev -w client\"",
     "build": "npm run build -w client",
     "typecheck": "tsc -p tsconfig.json && tsc -b client",
-    "refresh": "tsx --eval \"import('./api/_lib/snapshot.js').then(m=>m.refreshSnapshot()).then(s=>console.log(s.fetchedAt))\""
+    "refresh": "tsx --eval \"import('./api/_lib/snapshot.js').then(m=>m.refreshSnapshot('owner')).then(s=>console.log(s.fetchedAt))\"",
+    "import:positions": "node scripts/import-positions.mjs"
   },
   "dependencies": {
     "@upstash/redis": "^1.34.3",
